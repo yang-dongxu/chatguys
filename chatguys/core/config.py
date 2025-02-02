@@ -1,12 +1,16 @@
-import yaml
-from typing import Dict, Any, Optional
+"""Configuration management for roles and settings."""
+
 import os
 from pathlib import Path
+from typing import Dict, Any, Optional
+import yaml
 
 
-class AgentManager:
+class ConfigManager:
+    """Manages role configurations and settings."""
+    
     def __init__(self, config_dir: str = "config"):
-        """Initialize the AgentManager with a configuration directory.
+        """Initialize the ConfigManager.
         
         Args:
             config_dir (str): Path to the directory containing YAML configuration files

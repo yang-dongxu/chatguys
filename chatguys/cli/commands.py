@@ -1,23 +1,31 @@
-from typing import Callable, Dict, Optional, Any
-from .context_manager import ContextManager
-from .agent_manager import AgentManager
+"""Command processing for the chat application."""
+
+from typing import Callable, Dict, Optional
+from rich.markdown import Markdown
+
+from ..core.context import ContextManager
+from ..core.config import ConfigManager
 
 
 class CommandProcessor:
-    def __init__(self, context_manager: ContextManager, agent_manager: AgentManager):
+    """Handles system commands and their execution."""
+    
+    def __init__(self, context_manager: ContextManager, config_manager: ConfigManager):
         """Initialize the CommandProcessor.
         
         Args:
             context_manager (ContextManager): The conversation context manager
-            agent_manager (AgentManager): The agent configuration manager
+            config_manager (ConfigManager): The configuration manager
         """
         self.context_manager = context_manager
-        self.agent_manager = agent_manager
+        self.config_manager = config_manager
         self.commands: Dict[str, Callable] = {
             '/help': self.cmd_help,
             '/reset': self.cmd_reset,
             '/reload': self.cmd_reload,
             '/roles': self.cmd_roles,
+            '/quit': self.cmd_quit,
+            '/exit': self.cmd_quit,
         }
     
     def is_command(self, message: str) -> bool:
@@ -29,7 +37,7 @@ class CommandProcessor:
         Returns:
             bool: True if the message is a command, False otherwise
         """
-        return message.startswith('/')
+        return message.strip().startswith('/')
     
     def process_command(self, command: str) -> str:
         """Process a system command and return the response.
@@ -41,7 +49,7 @@ class CommandProcessor:
             str: The command response
         """
         # Split command and arguments
-        parts = command.split()
+        parts = command.strip().split()
         cmd = parts[0].lower()
         args = parts[1:] if len(parts) > 1 else []
         
@@ -61,9 +69,13 @@ class CommandProcessor:
 /reset - Clear conversation history
 /reload - Reload agent configurations
 /roles - List available roles
+/quit or /exit - Exit the application
 
 To send a message to a specific agent, use @RoleName at the start of your message.
-Example: @Tech How do I implement a binary search?"""
+Example: @Tech How do I implement a binary search?
+
+You can also mention multiple agents in one message:
+Example: @Tech @Default @Creative how would you describe the internet?"""
     
     def cmd_reset(self, *args) -> str:
         """Reset the conversation history.
@@ -81,7 +93,7 @@ Example: @Tech How do I implement a binary search?"""
             str: Confirmation message
         """
         try:
-            self.agent_manager.load_configurations()
+            self.config_manager.load_configurations()
             return "Agent configurations have been reloaded."
         except Exception as e:
             return f"Error reloading configurations: {str(e)}"
@@ -92,8 +104,26 @@ Example: @Tech How do I implement a binary search?"""
         Returns:
             str: List of available roles
         """
-        roles = self.agent_manager.list_roles()
+        roles = self.config_manager.list_roles()
         if not roles:
             return "No roles are currently configured."
         
-        return "Available roles:\n" + "\n".join(f"- {role}" for role in roles) 
+        role_descriptions = []
+        for role in roles:
+            config = self.config_manager.get_role_config(role)
+            if config and 'prompt' in config:
+                # Extract first sentence of prompt for brief description
+                description = config['prompt'].split('.')[0].strip()
+                role_descriptions.append(f"• **{role}**\n  {description}")
+            else:
+                role_descriptions.append(f"• **{role}**")
+        
+        return "Available roles:\n\n" + "\n\n".join(role_descriptions)
+    
+    def cmd_quit(self, *args) -> str:
+        """Handle quit command.
+        
+        Returns:
+            str: Goodbye message
+        """
+        return "Goodbye!" 

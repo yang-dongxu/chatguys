@@ -1,21 +1,12 @@
-from typing import List, Dict, Any
-from dataclasses import dataclass
-from datetime import datetime
+"""Context management for chat history."""
 
-
-@dataclass
-class Message:
-    """Represents a single message in the conversation."""
-    role: str  # The role/agent name or "user"
-    content: str
-    timestamp: datetime = None
-
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
+from typing import List, Optional
+from ..models.message import Message
 
 
 class ContextManager:
+    """Manages conversation history and context."""
+    
     def __init__(self, max_history: int = 100):
         """Initialize the ContextManager.
         
@@ -39,7 +30,7 @@ class ContextManager:
         if len(self.history) > self.max_history:
             self.history = self.history[-self.max_history:]
     
-    def get_history(self, last_n: int = None) -> List[Message]:
+    def get_history(self, last_n: Optional[int] = None) -> List[Message]:
         """Get the conversation history.
         
         Args:
@@ -56,8 +47,8 @@ class ContextManager:
         """Clear the conversation history."""
         self.history = []
     
-    def format_for_prompt(self, last_n: int = None) -> str:
-        """Format the conversation history for inclusion in a prompt.
+    def format_history(self, last_n: Optional[int] = None) -> str:
+        """Format the conversation history for display.
         
         Args:
             last_n (int, optional): Number of most recent messages to include
@@ -66,10 +57,4 @@ class ContextManager:
             str: Formatted conversation history
         """
         history = self.get_history(last_n)
-        formatted = []
-        
-        for msg in history:
-            timestamp = msg.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            formatted.append(f"[{timestamp}] {msg.role}: {msg.content}")
-        
-        return "\n".join(formatted) 
+        return "\n".join(msg.format_for_history() for msg in history) 
