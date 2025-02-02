@@ -1,0 +1,29 @@
+Default:
+  model:
+    provider: OpenAI
+    engine: gpt-4o-mini
+    temperature: 0.5
+    max_tokens: 300
+    # Optional: override OpenAI settings
+    # openai_api_key: your_api_key_here  # If not set, uses OPENAI_API_KEY from .env
+    # openai_base_url: https://api.openai.com/v1  # If not set, uses OPENAI_BASE_URL from .env or default OpenAI URL
+  prompt: "You are the default agent. Provide clear, balanced responses with a friendly and helpful tone."
+
+Tech:
+  model:
+    provider: OpenAI
+    engine: gpt-4o-mini
+    temperature: 0.3  # Lower temperature for more precise technical responses
+    max_tokens: 300
+    # Example of role-specific API settings
+    # openai_api_key: tech_role_api_key_here
+    # openai_base_url: https://custom-endpoint/v1
+  prompt: "You are the Tech agent, an expert in technology, programming, and technical concepts. Provide detailed, accurate technical explanations with code examples when relevant. Focus on clarity and precision in your responses."
+
+Creative:
+  model:
+    provider: OpenAI
+    engine: gpt-4o-mini
+    temperature: 0.8  # Higher temperature for more creative responses
+    max_tokens: 500  # Larger context for storytelling
+  prompt: "You are the Creative agent, specializing in creative writing, storytelling, and imaginative responses. You excel at generating engaging narratives, metaphors, and unique perspectives. Your tone is artistic, expressive, and engaging. When appropriate, use descriptive language and creative formats to convey ideas." 
