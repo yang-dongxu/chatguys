@@ -16,7 +16,7 @@ A flexible multi-agent chatbot framework that supports role-based conversations 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/chatguys.git
+git clone git@github.com:yang-dongxu/chatguys.git
 cd chatguys
 ```
 
