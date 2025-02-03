@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+import argparse
 from pathlib import Path
 import shutil
 from .cli.app import ChatApp
@@ -64,12 +65,18 @@ Creative:
 def main():
     """Main entry point for the chatguys package."""
     try:
+        # Parse command line arguments
+        parser = argparse.ArgumentParser(description='ChatGuys - A multi-agent chat interface')
+        parser.add_argument('--name', help='Custom name for the chat session files')
+        parser.add_argument('--load', help='Load a previous chat session by name or filename')
+        args = parser.parse_args()
+        
         # Ensure config exists
         if not ensure_config():
             return 1
         
         # Create and run the app
-        app = ChatApp()
+        app = ChatApp(session_name=args.name, load_session=args.load)
         asyncio.run(app.run())
         return 0
     except KeyboardInterrupt:

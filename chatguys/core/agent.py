@@ -1,7 +1,8 @@
 """Core agent functionality."""
 
 import os
-from typing import Dict, Any, Optional, Tuple
+import asyncio
+from typing import Dict, Any, Optional, Tuple, List
 import openai
 from openai import AsyncOpenAI
 from ..models.message import Message
@@ -30,7 +31,8 @@ class Agent:
         # print(f"Using base URL: {base_url}")
         self.client = AsyncOpenAI(
             api_key=api_key,
-            base_url=base_url
+            base_url=base_url,
+            timeout=30.0  # 30 second timeout
         )
     
     def _get_api_settings(self) -> Tuple[str, str]:
@@ -59,7 +61,7 @@ class Agent:
         
         return api_key, base_url
     
-    async def get_response(self, message: str, history: list[Message]) -> str:
+    async def get_response(self, message: str, history: List[Message]) -> str:
         """Get a response from the agent.
         
         Args:
@@ -90,15 +92,22 @@ class Agent:
             # Add the current message
             messages.append({"role": "user", "content": message})
             
-            # Call OpenAI API
-            response = await self.client.chat.completions.create(
-                model=self.config['model']['engine'],
-                messages=messages,
-                temperature=float(self.config['model'].get('temperature', 0.7)),
-                max_tokens=int(self.config['model'].get('max_tokens', 300))
-            )
-            
-            return response.choices[0].message.content
+            # Call OpenAI API with timeout and cancellation support
+            try:
+                async with asyncio.timeout(30):  # 30 second timeout
+                    response = await self.client.chat.completions.create(
+                        model=self.config['model']['engine'],
+                        messages=messages,
+                        temperature=float(self.config['model'].get('temperature', 0.7)),
+                        max_tokens=int(self.config['model'].get('max_tokens', 300))
+                    )
+                    return response.choices[0].message.content
+            except asyncio.TimeoutError:
+                return f"Error: Response timeout after 30 seconds"
+            except asyncio.CancelledError:
+                # Make sure to close any pending HTTP connections
+                await self.client.close()
+                raise
             
         except Exception as e:
             return f"Error getting response from {self.role_name}: {str(e)}" 
