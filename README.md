@@ -1,19 +1,17 @@
 # ChatGuys
 
-A flexible multi-agent chatbot framework that supports role-based conversations and dynamic configuration through YAML files.
+A flexible multi-agent chatbot framework that supports role-based conversations with OpenAI models.
 
 ## Features
 
 - Multiple agent roles with different personalities and capabilities
-- Support for both OpenAI and Google's Gemini models
 - Dynamic configuration through YAML files
-- Role-specific API keys and base URLs
+- Role-specific OpenAI API keys
 - Shared conversation history between agents
 - System commands for managing the chat session
 - Rich text output with markdown support
 - Easy role switching using @mentions
 - Automatic chat history saving in both JSON and plain text formats
-- Support for Gemini's experimental search with reference links
 
 ## Installation
 
@@ -41,9 +39,9 @@ cd chatguys
 pipx install -e .
 ```
 
-### Configuration
+## Configuration
 
-All configuration files are stored in `~/.config/chatguys/`:
+When you first run `chatguys`, it will create the necessary configuration files in `~/.config/chatguys/`:
 
 1. API Keys (`.env`):
    ```bash
@@ -51,41 +49,34 @@ All configuration files are stored in `~/.config/chatguys/`:
    OPENAI_API_KEY=your_api_key_here
    OPENAI_BASE_URL=https://api.openai.com/v1
    
-   # Google settings
-   GOOGLE_API_KEY=your_google_api_key_here
-   
    # Optional: Role-specific API keys
-   OPENAI_API_KEY_TECH=your_tech_role_api_key_here
-   GOOGLE_API_KEY_CREATIVE=your_creative_role_api_key_here
+   # OPENAI_API_KEY_TECH=your_tech_role_api_key
+   # OPENAI_API_KEY_CREATIVE=your_creative_role_api_key
    ```
 
 2. Role Configuration (`default_roles.yaml`):
    ```yaml
    Default:
      model:
-       provider: OpenAI
-       engine: gpt-4
-       temperature: 0.5
+       engine: gpt-3.5-turbo
+       temperature: 0.7
        max_tokens: 300
-     prompt: "You are the default agent. Provide clear, balanced responses."
+     prompt: "You are a helpful assistant. Provide clear and concise responses."
 
    Tech:
      model:
-       provider: OpenAI
        engine: gpt-4
        temperature: 0.3
-       max_tokens: 300
-     prompt: "You are the Tech agent. Answer with technical details."
-   
+       max_tokens: 500
+     prompt: "You are a technical expert. Provide detailed technical explanations and code examples."
+
    Creative:
      model:
-       provider: google
-       engine: gemini-2.0-flash-exp-search
-       temperature: 0.7
-     prompt: "You are the Creative agent. Be imaginative and inspiring."
+       engine: gpt-4
+       temperature: 0.8
+       max_tokens: 800
+     prompt: "You are a creative assistant. Think outside the box and provide imaginative responses."
    ```
-
-When you first run `chatguys`, it will create these configuration files if they don't exist. You'll need to edit them to add your API keys and customize the roles.
 
 ## Usage
 
@@ -110,17 +101,17 @@ chatguys
 4. Messages without @mentions will be handled by the default agent.
 
 5. You can use mentions in different ways:
-   - Same message to multiple agents (mentions at start):
+   - Same message to multiple agents (mentions at start or end):
      ```
-     @Tech @Creative @Default how would you describe the internet?
+     @Tech @Creative how would you describe the internet?
+     ```
+     or
+     ```
+     Tell me about AI @Tech @Creative
      ```
    - Different messages to different agents (mentions throughout):
      ```
      @Tech explain how databases work. @Creative write a story about a database.
-     ```
-   - Mentions at the end:
-     ```
-     Tell me about AI @Tech @Creative
      ```
 
 ## Chat History
@@ -137,19 +128,6 @@ Your chat histories are automatically saved in `~/.cache/chatguys/`:
 
 The file locations will be displayed when you exit the application.
 
-## Model Support
-
-### OpenAI Models
-- Supports all OpenAI chat models (gpt-3.5-turbo, gpt-4, etc.)
-- Configurable temperature and max tokens
-- Support for custom API endpoints
-
-### Google Gemini Models
-- Supports all Gemini models including:
-  - gemini-pro
-  - gemini-2.0-flash-exp-search (with reference links)
-- Automatic reference extraction and formatting for search results
-
 ## File Locations
 
 - Configuration: `~/.config/chatguys/`
@@ -158,6 +136,17 @@ The file locations will be displayed when you exit the application.
 - Chat History: `~/.cache/chatguys/`
   - `chat_YYYYMMDD_HHMMSS.json` - JSON format
   - `chat_YYYYMMDD_HHMMSS.txt` - Plain text format
+
+## Model Support
+
+- Supports all OpenAI chat models:
+  - gpt-3.5-turbo (default for basic queries)
+  - gpt-4 (default for Tech and Creative roles)
+  - Any other available OpenAI chat models
+- Configurable parameters per role:
+  - temperature (creativity level)
+  - max_tokens (response length)
+  - custom prompts
 
 ## Contributing
 

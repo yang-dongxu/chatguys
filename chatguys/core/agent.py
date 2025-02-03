@@ -4,7 +4,6 @@ import os
 from typing import Dict, Any, Optional, Tuple
 import openai
 from openai import AsyncOpenAI
-
 from ..models.message import Message
 
 
@@ -27,6 +26,8 @@ class Agent:
         
         # Initialize OpenAI client
         api_key, base_url = self._get_api_settings()
+        # print(f"Using API key: {api_key}")
+        # print(f"Using base URL: {base_url}")
         self.client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url
@@ -40,9 +41,9 @@ class Agent:
         """
         model_config = self.config.get('model', {})
         
-        # Try role-specific environment variables first
-        env_key = f"OPENAI_API_KEY_{self.role_name.upper()}"
-        env_url = f"OPENAI_BASE_URL_{self.role_name.upper()}"
+        # Try global environment variables first
+        env_key = f"OPENAI_API_KEY"
+        env_url = f"OPENAI_BASE_URL"
         
         api_key = (
             model_config.get('openai_api_key') or  # From YAML
@@ -68,35 +69,36 @@ class Agent:
         Returns:
             str: Agent's response
         """
-        # Convert history to OpenAI message format
-        messages = [{"role": "system", "content": self.config['prompt']}]
-        
-        # Add a system message to explain the conversation format
-        messages.append({
-            "role": "system",
-            "content": "The conversation history includes context about who messages are addressed to. "
-                      "Pay attention to the conversation flow and context when responding."
-        })
-        
-        # Add conversation history
-        for msg in history:
-            if msg.role == "user":
-                messages.append({"role": "user", "content": msg.content})
-            else:
-                messages.append({"role": "assistant", "content": msg.content})
-        
-        # Add the current message
-        messages.append({"role": "user", "content": message})
-        
         try:
+            # Convert history to OpenAI message format
+            messages = [{"role": "system", "content": self.config['prompt']}]
+            
+            # Add a system message to explain the conversation format
+            messages.append({
+                "role": "system",
+                "content": "The conversation history includes context about who messages are addressed to. "
+                          "Pay attention to the conversation flow and context when responding."
+            })
+            
+            # Add conversation history
+            for msg in history:
+                if msg.role == "user":
+                    messages.append({"role": "user", "content": msg.content})
+                else:
+                    messages.append({"role": "assistant", "content": msg.content})
+            
+            # Add the current message
+            messages.append({"role": "user", "content": message})
+            
             # Call OpenAI API
             response = await self.client.chat.completions.create(
                 model=self.config['model']['engine'],
                 messages=messages,
-                temperature=self.config['model']['temperature'],
-                max_tokens=self.config['model']['max_tokens']
+                temperature=float(self.config['model'].get('temperature', 0.7)),
+                max_tokens=int(self.config['model'].get('max_tokens', 300))
             )
             
             return response.choices[0].message.content
+            
         except Exception as e:
             return f"Error getting response from {self.role_name}: {str(e)}" 

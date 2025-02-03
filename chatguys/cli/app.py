@@ -22,14 +22,22 @@ class ChatApp:
     
     def __init__(self):
         """Initialize the chat application."""
+        # Get config directory
+        self.config_dir = Path.home() / ".config" / "chatguys"
+        self.config_dir.mkdir(parents=True, exist_ok=True)
+        
         # Load environment variables from config directory
-        config_dir = Path.home() / ".config" / "chatguys"
-        env_file = config_dir / ".env"
-        load_dotenv(env_file)
+        env_file = self.config_dir / ".env"
+        if not env_file.exists():
+            raise ValueError(f"API keys not configured. Please edit {env_file}")
+        print(f"Loading environment variables from {env_file}")
+        load_dotenv(env_file, override=True)
         
         # Store default OpenAI settings
         self.default_api_key = os.getenv("OPENAI_API_KEY")
         self.default_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        # print(f"Using API key: {self.default_api_key}")
+        # print(f"Using base URL: {self.default_base_url}")
         
         if not self.default_api_key:
             raise ValueError(f"OPENAI_API_KEY not set in {env_file}")

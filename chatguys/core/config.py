@@ -1,97 +1,75 @@
-"""Configuration management for roles and settings."""
+"""Configuration management."""
 
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import yaml
 
 
 class ConfigManager:
-    """Manages role configurations and settings."""
+    """Manages role configurations."""
     
-    def __init__(self, config_dir: str = "config"):
-        """Initialize the ConfigManager.
-        
-        Args:
-            config_dir (str): Path to the directory containing YAML configuration files
-        """
-        self.config_dir = config_dir
+    def __init__(self):
+        """Initialize the ConfigManager."""
+        self.config_dir = Path.home() / ".config" / "chatguys"
         self.roles: Dict[str, Dict[str, Any]] = {}
         self.load_configurations()
     
     def load_configurations(self) -> None:
-        """Load and merge all YAML configuration files from the config directory."""
-        if not os.path.exists(self.config_dir):
-            raise FileNotFoundError(f"Configuration directory {self.config_dir} not found")
+        """Load all role configurations."""
+        # Ensure config directory exists
+        self.config_dir.mkdir(parents=True, exist_ok=True)
         
-        # Get all YAML files in the config directory
-        yaml_files = sorted(Path(self.config_dir).glob("*.yaml"))
+        # Load default roles config
+        default_config = self.config_dir / "default_roles.yaml"
+        if not default_config.exists():
+            # Use minimal default config
+            self.roles = {
+                "Default": {
+                    "model": {
+                        "provider": "OpenAI",
+                        "engine": "gpt-4",
+                        "temperature": 0.7,
+                        "max_tokens": 300
+                    },
+                    "prompt": "You are a helpful assistant. Provide clear and concise responses."
+                }
+            }
+            return
         
-        for yaml_file in yaml_files:
-            with open(yaml_file, 'r') as f:
-                config = yaml.safe_load(f)
-                if config:
-                    self._merge_config(config)
-    
-    def _merge_config(self, new_config: Dict[str, Any]) -> None:
-        """Merge a new configuration with existing roles.
-        
-        Args:
-            new_config (Dict[str, Any]): New configuration to merge
-        """
-        for role_name, role_config in new_config.items():
-            if role_name in self.roles:
-                # Deep merge for existing roles
-                self.roles[role_name] = self._deep_merge(
-                    self.roles[role_name], role_config
-                )
-            else:
-                # New role, just add it
-                self.roles[role_name] = role_config
-    
-    def _deep_merge(self, dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
-        """Deep merge two dictionaries.
-        
-        Args:
-            dict1 (Dict[str, Any]): Base dictionary
-            dict2 (Dict[str, Any]): Dictionary to merge on top
-            
-        Returns:
-            Dict[str, Any]: Merged dictionary
-        """
-        result = dict1.copy()
-        
-        for key, value in dict2.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-                result[key] = self._deep_merge(result[key], value)
-            else:
-                result[key] = value
-        
-        return result
+        try:
+            with open(default_config, 'r', encoding='utf-8') as f:
+                self.roles = yaml.safe_load(f) or {}
+        except Exception as e:
+            print(f"Error loading configuration: {str(e)}")
+            # Fall back to minimal default config
+            self.roles = {
+                "Default": {
+                    "model": {
+                        "provider": "OpenAI",
+                        "engine": "gpt-4",
+                        "temperature": 0.7,
+                        "max_tokens": 300
+                    },
+                    "prompt": "You are a helpful assistant. Provide clear and concise responses."
+                }
+            }
     
     def get_role_config(self, role_name: str) -> Optional[Dict[str, Any]]:
-        """Get the configuration for a specific role.
+        """Get configuration for a specific role.
         
         Args:
             role_name (str): Name of the role
             
         Returns:
-            Optional[Dict[str, Any]]: Role configuration if it exists, None otherwise
+            Optional[Dict[str, Any]]: Role configuration if found, None otherwise
         """
         return self.roles.get(role_name)
     
-    def get_default_role(self) -> Optional[Dict[str, Any]]:
-        """Get the configuration for the default role.
+    def list_roles(self) -> List[str]:
+        """Get list of available roles.
         
         Returns:
-            Optional[Dict[str, Any]]: Default role configuration if it exists, None otherwise
-        """
-        return self.get_role_config("Default")
-    
-    def list_roles(self) -> list[str]:
-        """Get a list of all available roles.
-        
-        Returns:
-            list[str]: List of role names
+            List[str]: List of role names
         """
         return list(self.roles.keys()) 
