@@ -121,9 +121,11 @@ Example: @Tech @Default @Creative how would you describe the internet?"""
         return "Available roles:\n\n" + "\n\n".join(role_descriptions)
     
     def cmd_quit(self, *args) -> str:
-        """Handle quit command.
+        """Quit the application.
         
         Returns:
-            str: Goodbye message
+            str: Quit message with log file locations
         """
-        return "Goodbye!" 
+        log_file = self.context_manager.session_file
+        text_file = self.context_manager.text_file
+        return f"Goodbye! Your chat history has been saved to:\n- JSON: {log_file}\n- Text: {text_file}" 

@@ -3,6 +3,7 @@
 import os
 import signal
 import asyncio
+from pathlib import Path
 from typing import List, Tuple
 from rich.console import Console
 from rich.markdown import Markdown
@@ -21,15 +22,17 @@ class ChatApp:
     
     def __init__(self):
         """Initialize the chat application."""
-        # Load environment variables
-        load_dotenv()
+        # Load environment variables from config directory
+        config_dir = Path.home() / ".config" / "chatguys"
+        env_file = config_dir / ".env"
+        load_dotenv(env_file)
         
         # Store default OpenAI settings
         self.default_api_key = os.getenv("OPENAI_API_KEY")
         self.default_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         
         if not self.default_api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set")
+            raise ValueError(f"OPENAI_API_KEY not set in {env_file}")
         
         # Initialize core components
         self.config_manager = ConfigManager()
@@ -111,7 +114,8 @@ class ChatApp:
                 
                 # Handle exit command
                 if message.lower() in ['exit', 'quit', '/quit', '/exit']:
-                    self.input_handler.display_message("Goodbye!")
+                    quit_message = self.command_processor.cmd_quit()
+                    self.input_handler.display_message(quit_message)
                     break
                 
                 # Process the message
@@ -154,7 +158,8 @@ class ChatApp:
             
             except asyncio.CancelledError:
                 # Handle cancellation gracefully
-                self.input_handler.display_message("\nShutting down gracefully...")
+                quit_message = self.command_processor.cmd_quit()
+                self.input_handler.display_message(f"\n{quit_message}")
                 break
             except KeyboardInterrupt:
                 # Handle Ctrl+C gracefully
